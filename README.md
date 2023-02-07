@@ -2,9 +2,44 @@
 
 ## Set Up
 
+```bash
+# Create new environment using anaconda
+conda create --name env-name python=3.8
+
+# Activate newly created environment
+conda activate env-name
+
+# Install required packages
+pip install -r requirements.txt
+
+# Deactivate environment
+conda deactivate env-name
+```
+
 ## Getting started
 
-### Decentralized Federated Learning
+## Decentralized Federated Learning
+
+### Generate clients
+
+- Configure `constants.py` to edit `SOURCE_CSV` and `SERVER_ADDRESS`
+
+```bash
+python preprocessing.py
+```
+
+### Run clients
+
+```bash
+# Change into the directory of the client you wish to execute
+cd path/of/client
+
+# Initiating client of FL round
+python client.py initiator
+
+# Participating client in FL round
+python client.py client
+```
 
 ## Credits
 
