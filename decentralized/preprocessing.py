@@ -320,44 +320,36 @@ print(df.shape)
 # We have 22 columns after preprocessing
 # ----------------------------------------------------------Preprocessing End------------------------------------------------------------------------
 
-total_row_count=df.shape[0]
-row_count=math.floor(total_row_count/3)
-twice_row_count=row_count*2
-
-print("total_row_count:",total_row_count)
-print("row_count:",row_count)
-print("twice_row_count:",twice_row_count)
-
-df1 = df.iloc[:row_count]
-df2 = df.iloc[row_count:twice_row_count]
-df3 = df.iloc[twice_row_count:]
-print(df1.shape, df2.shape, df3.shape)
-
-import os
+import os, sys
 import shutil
 
 parent_dir = os.getcwd()
 directory = "generated"
 parent_path = os.path.join(parent_dir, directory)
-client1_path = os.path.join(parent_path, "client1")
-client2_path = os.path.join(parent_path, "client2")
-client3_path = os.path.join(parent_path, "client3")
 
 try:
-    for path in [parent_path, client1_path, client2_path, client3_path]:
-        os.mkdir(path)
+    os.mkdir(parent_path)
 except:
     print("Already created path")
 
-try:
-    shutil.copy("./client.py", client1_path)
-    shutil.copy("./constants.py", client1_path)
-    df1.to_csv(client1_path + "/dataset.csv")
-    shutil.copy("./client.py", client2_path)
-    shutil.copy("./constants.py", client2_path)
-    df2.to_csv(client2_path + "/dataset.csv")
-    shutil.copy("./client.py", client3_path)
-    shutil.copy("./constants.py", client3_path)
-    df3.to_csv(client3_path + "/dataset.csv")
-except:
-    print("Copying and generating CSV failed")
+NO_OF_CLIENTS = 3
+if len(sys.argv) != 1:
+    if int(sys.argv[1]) >= 3:
+        NO_OF_CLIENTS = int(sys.argv[1])
+    else:
+        print("Minimum of 3 clients required...")
+
+for i in range(1, NO_OF_CLIENTS + 1):
+    sampled_df = df.sample(frac=1.0 / NO_OF_CLIENTS, replace=False, random_state=1)
+    print("Client ", i, ": ", sampled_df.shape)
+    client_path = os.path.join(parent_path, "client" + str(i))
+    try:
+        os.mkdir(client_path)
+    except:
+        print("Already created path")
+    try:
+        shutil.copy("./client.py", client_path)
+        shutil.copy("./constants.py", client_path)
+        sampled_df.to_csv(client_path + "/dataset.csv")
+    except:
+        print("Copying and generating CSV failed")
