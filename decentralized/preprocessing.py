@@ -2,6 +2,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import warnings
+import math
 
 warnings.filterwarnings("ignore")
 
@@ -319,9 +320,17 @@ print(df.shape)
 # We have 22 columns after preprocessing
 # ----------------------------------------------------------Preprocessing End------------------------------------------------------------------------
 
-df1 = df.iloc[:423164]
-df2 = df.iloc[423164:846328]
-df3 = df.iloc[846328:]
+total_row_count=df.shape[0]
+row_count=math.floor(total_row_count/3)
+twice_row_count=row_count*2
+
+print("total_row_count:",total_row_count)
+print("row_count:",row_count)
+print("twice_row_count:",twice_row_count)
+
+df1 = df.iloc[:row_count]
+df2 = df.iloc[row_count:twice_row_count]
+df3 = df.iloc[twice_row_count:]
 print(df1.shape, df2.shape, df3.shape)
 
 import os
