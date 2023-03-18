@@ -7,25 +7,17 @@ import sys
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-# Tensorflow Library Dependencies
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import (
-    Dense,
-    Dropout,
-    Input,
-)
-
 # Federated Learning Package with its associated types
 import flwr as fl
 from typing import Optional, Dict, Tuple
 
-import warnings
+# Blockchain
+import web3
 
-warnings.filterwarnings("ignore")
-
-# Local imports
-import constants as constants
-
+# Local dependencies
+from blockchain import get_metrics_contract, get_web3_provider
+from model import model_arch
+from utils import _load_json
 
 # ---------------------------------------------------Initiator----------------------------------------------
 class SaveModelStrategy(fl.server.strategy.FedAvg):
@@ -62,8 +54,8 @@ def initiator():
 
     # Start Flower server for n rounds of federated learning
     fl.server.start_server(
-        server_address=constants.SERVER_ADDRESS,
-        config=fl.server.ServerConfig(num_rounds=3),
+        server_address=config['server_address'],
+        config=fl.server.ServerConfig(num_rounds=config['rounds']),
         grpc_max_message_length=1024 * 1024 * 1024,
         strategy=strategy,
     )
@@ -82,7 +74,7 @@ class FLClient(fl.client.NumPyClient):
 
         print("[CLIENT] fit: Before model.fit")
         history = model.fit(
-            x_train, y_train, epochs=5, batch_size=64, validation_data=(x_test, y_test)
+            x_train, y_train, epochs=config['epochs'], batch_size=config['batch_size'], validation_data=(x_test, y_test)
         )
         print("[CLIENT] fit: After model.fit")
 
@@ -97,6 +89,10 @@ class FLClient(fl.client.NumPyClient):
             "val_loss": history.history["val_loss"][0],
             "val_accuracy": history.history["val_accuracy"][0],
         }
+        tx_hash = metrics_contract.functions.setMetrics(
+            int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET)
+        ).transact()
+        web3.eth.waitForTransactionReceipt(tx_hash)
         print("[CLIENT] fit: Results:", results)
         return model.get_weights(), len(x_train), results
 
@@ -109,39 +105,8 @@ class FLClient(fl.client.NumPyClient):
 
 def client():
     fl.client.start_numpy_client(
-        server_address=constants.SERVER_ADDRESS, client=FLClient()
+        server_address=config['server_address'], client=FLClient()
     )
-
-
-# ---------------------------------------------------Model----------------------------------------------
-model = Sequential()
-
-# input layer
-model.add(Input(117))
-print("[MODEL] After input layer")
-
-# hidden layer
-model.add(Dense(59, activation="relu"))
-model.add(Dropout(0.1))
-print("[MODEL] After 1st hidden layer")
-
-# hidden layer
-model.add(Dense(30, activation="relu"))
-model.add(Dropout(0.1))
-print("[MODEL] After 2nd hidden layer")
-
-# hidden layer
-model.add(Dense(15, activation="relu"))
-model.add(Dropout(0.1))
-print("[MODEL] After 3rd hidden layer")
-
-# output layer
-model.add(Dense(1, activation="sigmoid"))
-print("[MODEL] After output layer")
-
-# Compile model
-model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-print("[MODEL] After model.compile")
 
 # ---------------------------------------------------Decentralization----------------------------------------------
 DATASET = "./dataset.csv"
@@ -151,10 +116,16 @@ print(df.shape)
 x = df.iloc[:, 2:-1].values
 y = df.iloc[:, -1].values
 
+config = _load_json(sys.argv[2] if len(sys.argv) >= 3 else 'config.json')
+metrics_contract = get_metrics_contract(config)
+web3 = get_web3_provider(config)
+model = model_arch()
+OFFSET = 100_000
+
 if sys.argv[1] == "initiator":
     # Load data and model here to avoid the overhead of doing it in `evaluate` itself
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.001, random_state=0
+        x, y, test_size=config['initiator_test_size'], random_state=0
     )
     scaler = MinMaxScaler()
     x_train = scaler.fit_transform(x_train)
@@ -162,14 +133,10 @@ if sys.argv[1] == "initiator":
     # Use the last 5k training examples as a validation set
 
     x_val, y_val = x_train[0:500], y_train[0:500]
-    # x = df.iloc[:, 2:-1].values
-    # y = df.iloc[:, -1].values
-    # x_train,_,y_train,_ =train_test_split(x, y, test_size=0.20, random_state=0)
-    # x_val, y_val = x_train[0:500], y_train[0:500]
     initiator()
 elif sys.argv[1] == "client":
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.05, random_state=0
+        x, y, test_size=config['client_test_size'], random_state=0
     )
     print(x_train.shape[1])
     scaler = MinMaxScaler()

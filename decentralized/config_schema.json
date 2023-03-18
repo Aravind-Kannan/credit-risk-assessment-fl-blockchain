@@ -1,0 +1,32 @@
+{
+    "server_address": {
+        "type": "string"
+    },
+    "source_csv": {
+        "type": "string"
+    },
+    "application_folder": {
+        "type": "string"
+    },
+    "network_url": {
+        "type": "string"
+    },
+    "number_of_clients": {
+        "type": "number"
+    },
+    "rounds": {
+        "type": "number"
+    },
+    "batch_size": {
+        "type": "number"
+    },
+    "epochs": {
+        "type": "number"
+    },
+    "initiator_test_size": {
+        "type": "number"
+    },
+    "client_test_size": {
+        "type": "number"
+    }
+}
