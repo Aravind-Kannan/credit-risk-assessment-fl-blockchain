@@ -113,7 +113,7 @@ DATASET = "./dataset.csv"
 df = pd.read_csv(DATASET)
 print(df.shape)
 
-x = df.iloc[:, 2:-1].values
+x = df.iloc[:, 0:-1].values
 y = df.iloc[:, -1].values
 
 config_client = _load_json(sys.argv[2] if len(sys.argv) >= 3 else 'config.json')
