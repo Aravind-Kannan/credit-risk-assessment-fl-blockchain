@@ -54,8 +54,8 @@ def initiator():
 
     # Start Flower server for n rounds of federated learning
     fl.server.start_server(
-        server_address=config['server_address'],
-        config=fl.server.ServerConfig(num_rounds=config['rounds']),
+        server_address=config_client['server_address'],
+        config=fl.server.ServerConfig(num_rounds=config_client['rounds']),
         grpc_max_message_length=1024 * 1024 * 1024,
         strategy=strategy,
     )
@@ -74,7 +74,7 @@ class FLClient(fl.client.NumPyClient):
 
         print("[CLIENT] fit: Before model.fit")
         history = model.fit(
-            x_train, y_train, epochs=config['epochs'], batch_size=config['batch_size'], validation_data=(x_test, y_test)
+            x_train, y_train, epochs=config_client['epochs'], batch_size=config_client['batch_size'], validation_data=(x_test, y_test)
         )
         print("[CLIENT] fit: After model.fit")
 
@@ -89,7 +89,7 @@ class FLClient(fl.client.NumPyClient):
             "val_loss": history.history["val_loss"][0],
             "val_accuracy": history.history["val_accuracy"][0],
         }
-        tx_hash = metrics_contract.functions.setMetrics(
+        tx_hash = metrics_contract.functions.setValues(
             int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET)
         ).transact()
         web3.eth.waitForTransactionReceipt(tx_hash)
@@ -105,7 +105,7 @@ class FLClient(fl.client.NumPyClient):
 
 def client():
     fl.client.start_numpy_client(
-        server_address=config['server_address'], client=FLClient()
+        server_address=config_client['server_address'], client=FLClient()
     )
 
 # ---------------------------------------------------Decentralization----------------------------------------------
@@ -116,16 +116,16 @@ print(df.shape)
 x = df.iloc[:, 2:-1].values
 y = df.iloc[:, -1].values
 
-config = _load_json(sys.argv[2] if len(sys.argv) >= 3 else 'config.json')
-metrics_contract = get_metrics_contract(config)
-web3 = get_web3_provider(config)
+config_client = _load_json(sys.argv[2] if len(sys.argv) >= 3 else 'config.json')
+metrics_contract = get_metrics_contract(config_client)
+web3 = get_web3_provider(config_client)
 model = model_arch()
 OFFSET = 100_000
 
 if sys.argv[1] == "initiator":
     # Load data and model here to avoid the overhead of doing it in `evaluate` itself
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=config['initiator_test_size'], random_state=0
+        x, y, test_size=config_client['initiator_test_size'], random_state=0
     )
     scaler = MinMaxScaler()
     x_train = scaler.fit_transform(x_train)
@@ -136,7 +136,7 @@ if sys.argv[1] == "initiator":
     initiator()
 elif sys.argv[1] == "client":
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=config['client_test_size'], random_state=0
+        x, y, test_size=config_client['client_test_size'], random_state=0
     )
     print(x_train.shape[1])
     scaler = MinMaxScaler()

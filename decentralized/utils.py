@@ -2,10 +2,11 @@ import json
 
 default_values = {
     "string": "",
-    "number": 0,
+    "int": 0,
     "list": [],
     "dict": {},
     "boolean": False,
+    "float": 0.0
 }
 
 def _load_json(file):
@@ -25,7 +26,7 @@ def _validate_json(json_data, json_schema):
         received = json_data[k]
         if type(expected) != type(received):
             raise Exception(
-                f"Validation Failed: Type mismatch for ${k}\n\tExpected: ${expected} \n\tReceived: ${received}"
+                f"Validation Failed: Type mismatch for {k}\n\tExpected: {expected} \n\tReceived: {received}"
             )
 
 
