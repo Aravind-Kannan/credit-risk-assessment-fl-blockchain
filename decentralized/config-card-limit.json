@@ -1,0 +1,12 @@
+{
+    "server_address": "127.0.0.1:3001",
+    "application_folder": "credit_card_limit",
+    "source_csv": "../../datasets/credit_card_limit/credit_card_limit.csv",
+    "network_url": "http://127.0.0.1:7545",
+    "number_of_clients": 3,
+    "rounds": 3,
+    "batch_size": 16,
+    "epochs": 5,
+    "initiator_test_size": 0.01,
+    "client_test_size": 0.08
+}

@@ -12,21 +12,21 @@
         "type": "string"
     },
     "number_of_clients": {
-        "type": "number"
+        "type": "int"
     },
     "rounds": {
-        "type": "number"
+        "type": "int"
     },
     "batch_size": {
-        "type": "number"
+        "type": "int"
     },
     "epochs": {
-        "type": "number"
+        "type": "int"
     },
     "initiator_test_size": {
-        "type": "number"
+        "type": "float"
     },
     "client_test_size": {
-        "type": "number"
+        "type": "float"
     }
 }
