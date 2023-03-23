@@ -10,7 +10,7 @@ def model_arch():
     model = Sequential()
 
     # input layer
-    model.add(Input(117))
+    model.add(Input(119))
     print("[MODEL] After input layer")
 
     # hidden layer

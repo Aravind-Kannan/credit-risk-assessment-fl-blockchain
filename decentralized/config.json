@@ -4,7 +4,7 @@
     "source_csv": "../../datasets/loan_defaulters/loan_defaulters.csv",
     "network_url": "http://127.0.0.1:7545",
     "number_of_clients": 3,
-    "rounds": 3,
+    "rounds": 2,
     "batch_size": 64,
     "epochs": 5,
     "initiator_test_size": 0.001,

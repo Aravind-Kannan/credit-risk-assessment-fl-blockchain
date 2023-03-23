@@ -15,9 +15,11 @@ from typing import Optional, Dict, Tuple
 import web3
 
 # Local dependencies
-from blockchain import get_metrics_contract, get_web3_provider
+from blockchain import get_model_contract, get_web3_provider, get_hash_storage_local_contract, get_hash_storage_global_contract, upload_to_ipfs
 from model import model_arch
 from utils import _load_json
+
+import datetime
 
 # ---------------------------------------------------Initiator----------------------------------------------
 class SaveModelStrategy(fl.server.strategy.FedAvg):
@@ -41,7 +43,13 @@ def get_evaluate_fn(model):
         config: Dict[str, fl.common.Scalar],
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
         model.set_weights(parameters)  # Update model with the latest parameters
-        model.save("model.h5")
+        filename = f"global_{int(datetime.datetime.now().timestamp())}.h5"
+        model.save(filename)
+        
+        hash_value = upload_to_ipfs(filename)
+        tx_hash = hash_storage_global_contract.functions.storeHash(hash_value, config_client["application_folder"]).transact()
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
         loss, accuracy = model.evaluate(x_val, y_val)
         return loss, {"accuracy": accuracy}
 
@@ -89,10 +97,23 @@ class FLClient(fl.client.NumPyClient):
             "val_loss": history.history["val_loss"][0],
             "val_accuracy": history.history["val_accuracy"][0],
         }
-        tx_hash = metrics_contract.functions.setValues(
-            int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET)
-        ).transact()
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        
+        filename = f"local_{int(datetime.datetime.now().timestamp())}.h5"
+        model.save(filename)
+        
+        result = model_contract.functions.setValues(
+            int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET), config_client["application_folder"]
+        ).call()
+        print(result)
+        if result == True:
+            hash_value = upload_to_ipfs(filename)
+            tx_hash = hash_storage_local_contract.functions.storeHash(hash_value, config_client["application_folder"]).transact()
+            web3.eth.waitForTransactionReceipt(tx_hash)
+            print()
+            tx_hash = model_contract.functions.setValues(
+                int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET), config_client["application_folder"]
+            ).transact()
+            web3.eth.waitForTransactionReceipt(tx_hash)
         print("[CLIENT] fit: Results:", results)
         return model.get_weights(), len(x_train), results
 
@@ -117,7 +138,9 @@ x = df.iloc[:, 0:-1].values
 y = df.iloc[:, -1].values
 
 config_client = _load_json(sys.argv[2] if len(sys.argv) >= 3 else 'config.json')
-metrics_contract = get_metrics_contract(config_client)
+model_contract = get_model_contract(config_client)
+hash_storage_local_contract = get_hash_storage_local_contract(config_client)
+hash_storage_global_contract = get_hash_storage_global_contract(config_client)
 web3 = get_web3_provider(config_client)
 model = model_arch()
 OFFSET = 100_000
