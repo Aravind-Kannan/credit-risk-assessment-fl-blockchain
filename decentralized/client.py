@@ -45,12 +45,21 @@ def get_evaluate_fn(model):
         model.set_weights(parameters)  # Update model with the latest parameters
         filename = f"global_{int(datetime.datetime.now().timestamp())}.h5"
         model.save(filename)
-        
+        print(f"[INITIATOR] Rounds: {rounds}")
+        print(f"[INITIATOR] Saving {filename} file...")
+
         hash_value = upload_to_ipfs(filename)
         tx_hash = hash_storage_global_contract.functions.storeHash(hash_value, config_client["application_folder"]).transact()
         web3.eth.waitForTransactionReceipt(tx_hash)
+        print(f"[INITIATOR] Uploading {filename} file to IPFS...")
+        print(f"[INITIATOR] {filename} hash: {hash_value}")
 
         loss, accuracy = model.evaluate(x_val, y_val)
+        result = model_contract.functions.setValues(
+            int(accuracy * OFFSET), int(loss * OFFSET), config_client["application_folder"]
+        ).transact()
+        print(f"[INITIATOR] Loss: {round(loss, 4) * 100} %   Accuracy: {round(accuracy, 4) * 100} %...")
+        print(f"[INITIATOR] {filename} hash: {hash_value}")
         return loss, {"accuracy": accuracy}
 
     return evaluate
@@ -100,20 +109,14 @@ class FLClient(fl.client.NumPyClient):
         
         filename = f"local_{int(datetime.datetime.now().timestamp())}.h5"
         model.save(filename)
-        
-        result = model_contract.functions.setValues(
-            int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET), config_client["application_folder"]
-        ).call()
-        print(result)
-        if result == True:
-            hash_value = upload_to_ipfs(filename)
-            tx_hash = hash_storage_local_contract.functions.storeHash(hash_value, config_client["application_folder"]).transact()
-            web3.eth.waitForTransactionReceipt(tx_hash)
-            print()
-            tx_hash = model_contract.functions.setValues(
-                int(results["loss"] * OFFSET), int(results["accuracy"] * OFFSET), config_client["application_folder"]
-            ).transact()
-            web3.eth.waitForTransactionReceipt(tx_hash)
+        print(f"[CLIENT] Saving {filename} file...")
+
+        hash_value = upload_to_ipfs(filename)
+        tx_hash = hash_storage_local_contract.functions.storeHash(hash_value, config_client["application_folder"]).transact()
+        web3.eth.waitForTransactionReceipt(tx_hash)
+        print(f"[CLIENT] Uploading {filename} file to IPFS...")
+        print(f"[CLIENT] {filename} hash: {hash_value}")
+
         print("[CLIENT] fit: Results:", results)
         return model.get_weights(), len(x_train), results
 

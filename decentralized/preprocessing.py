@@ -39,6 +39,7 @@ def generator(config_file):
             shutil.copy("./blockchain.py", client_path)
             shutil.copy("./utils.py", client_path)
             shutil.copy(config_file, client_path)
+            os.rename(client_path + "/" + config_file, client_path + "/config.json")
             for item in os.listdir(application_path):
                 if item != "__pycache__":
                     shutil.copy(application_path + "/" + item, client_path)
