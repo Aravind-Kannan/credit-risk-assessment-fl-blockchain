@@ -28,5 +28,8 @@
     },
     "client_test_size": {
         "type": "float"
+    },
+    "contracts" : {
+        "type": "dict"
     }
 }

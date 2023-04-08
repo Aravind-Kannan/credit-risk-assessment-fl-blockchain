@@ -62,7 +62,6 @@ def main():
             print("Error: Invalid option")
             help_info()
     else:
-        print("Error: Improper usage")
         help_info()
 
 
