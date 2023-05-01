@@ -1,5 +1,6 @@
 {
-    "server_address": "127.0.0.1:3001",
+    "server_address": "127.0.0.1:3005",
+    "ip_address": "0.tcp.in.ngrok.io:10240",
     "application_folder": "credit_card_limit",
     "source_csv": "../../datasets/credit_card_limit/credit_card_limit.csv",
     "network_url": "http://127.0.0.1:7545",
@@ -8,5 +9,284 @@
     "batch_size": 16,
     "epochs": 5,
     "initiator_test_size": 0.01,
-    "client_test_size": 0.08
+    "client_test_size": 0.08,
+    "contracts": {
+        "model": {
+            "contractAddress": "0xe44c00B6B01aDf7188491e1855150b114d55DfcA",
+            "ABI": [
+                {
+                    "inputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "constructor"
+                },
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "timestamp",
+                            "type": "uint256"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "accuracy",
+                            "type": "uint256"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "loss",
+                            "type": "uint256"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "string",
+                            "name": "application",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "ValuesUpdated",
+                    "type": "event"
+                },
+                {
+                    "inputs": [],
+                    "name": "getAccuracy",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getApplication",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getLoss",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "accuracy",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "loss",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "application",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "setValues",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ]
+        },
+        "hashStorageLocal": {
+            "contractAddress": "0xe637134a55Ecb50e382F1543B18Fd4074AC0dD52",
+            "ABI": [
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "timestamp",
+                            "type": "uint256"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "string",
+                            "name": "hashValue",
+                            "type": "string"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "string",
+                            "name": "application",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "HashUpdated",
+                    "type": "event"
+                },
+                {
+                    "inputs": [],
+                    "name": "_hashValue",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getApplication",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getHash",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "string",
+                            "name": "hash",
+                            "type": "string"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "application",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "storeHash",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ]
+        },
+        "hashStorageGlobal": {
+            "contractAddress": "0x6017b3dd375eCB38ce81f5F2D89AA28487C59af3",
+            "ABI": [
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "timestamp",
+                            "type": "uint256"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "string",
+                            "name": "hashValue",
+                            "type": "string"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "string",
+                            "name": "application",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "HashUpdated",
+                    "type": "event"
+                },
+                {
+                    "inputs": [],
+                    "name": "_hashValue",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getApplication",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getHash",
+                    "outputs": [
+                        {
+                            "internalType": "string",
+                            "name": "",
+                            "type": "string"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "string",
+                            "name": "hash",
+                            "type": "string"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "application",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "storeHash",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ]
+        }
+    }
 }

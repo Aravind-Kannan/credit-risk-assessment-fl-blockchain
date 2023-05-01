@@ -2,6 +2,9 @@
     "server_address": {
         "type": "string"
     },
+    "ip_address": {
+        "type": "string"
+    },
     "source_csv": {
         "type": "string"
     },
@@ -29,7 +32,7 @@
     "client_test_size": {
         "type": "float"
     },
-    "contracts" : {
+    "contracts": {
         "type": "dict"
     }
 }

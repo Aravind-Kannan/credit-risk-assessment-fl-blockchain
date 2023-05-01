@@ -1,5 +1,6 @@
 {
-    "server_address": "127.0.0.1:3001",
+    "server_address": "127.0.0.1:3005",
+    "ip_address": "127.0.0.1:1001",
     "application_folder": "loan_defaulter",
     "source_csv": "../../datasets/loan_defaulters/loan_defaulters.csv",
     "network_url": "http://127.0.0.1:7545",
@@ -11,7 +12,7 @@
     "client_test_size": 0.05,
     "contracts": {
         "model": {
-            "contractAddress": "0x7dC0309Fd531e6FD10261a5BC104070f5F1C43cD",
+            "contractAddress": "0xe44c00B6B01aDf7188491e1855150b114d55DfcA",
             "ABI": [
                 {
                     "inputs": [],
@@ -114,7 +115,7 @@
             ]
         },
         "hashStorageLocal": {
-            "contractAddress": "0x753e9ab98a00A134057ecCc2B9a0EFAb240301fB",
+            "contractAddress": "0xe637134a55Ecb50e382F1543B18Fd4074AC0dD52",
             "ABI": [
                 {
                     "anonymous": false,
@@ -201,7 +202,7 @@
             ]
         },
         "hashStorageGlobal": {
-            "contractAddress": "0xbD78E8389027120a868683DfE605C12395369931",
+            "contractAddress": "0x6017b3dd375eCB38ce81f5F2D89AA28487C59af3",
             "ABI": [
                 {
                     "anonymous": false,

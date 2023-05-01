@@ -1,4 +1,5 @@
 # Standard ML Libraries
+import threading
 import pandas as pd
 import numpy as np
 import sys
@@ -60,6 +61,10 @@ def get_evaluate_fn(model):
         ).transact()
         print(f"[INITIATOR] Loss: {round(loss, 4) * 100} %   Accuracy: {round(accuracy, 4) * 100} %...")
         print(f"[INITIATOR] {filename} hash: {hash_value}")
+
+        global round_number
+        round_number += 1
+        
         return loss, {"accuracy": accuracy}
 
     return evaluate
@@ -118,6 +123,10 @@ class FLClient(fl.client.NumPyClient):
         print(f"[CLIENT] {filename} hash: {hash_value}")
 
         print("[CLIENT] fit: Results:", results)
+
+        global round_number
+        round_number += 1
+
         return model.get_weights(), len(x_train), results
 
     def evaluate(self, parameters, config):
@@ -127,9 +136,9 @@ class FLClient(fl.client.NumPyClient):
         return loss, len(x_test), {"accuracy": float(accuracy)}
 
 
-def client():
+def client(address):
     fl.client.start_numpy_client(
-        server_address=config_client['server_address'], client=FLClient()
+        server_address=address, client=FLClient()
     )
 
 # ---------------------------------------------------Decentralization----------------------------------------------
@@ -148,24 +157,156 @@ web3 = get_web3_provider(config_client)
 model = model_arch()
 OFFSET = 100_000
 
-if sys.argv[1] == "initiator":
-    # Load data and model here to avoid the overhead of doing it in `evaluate` itself
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=config_client['initiator_test_size'], random_state=0
-    )
-    scaler = MinMaxScaler()
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
-    # Use the last 5k training examples as a validation set
+# ---------------------------------------------------Flask Hosting----------------------------------------------
+from flask import Flask, Response
+from flask_restx import Api, Resource, fields
+from werkzeug.middleware.proxy_fix import ProxyFix
+from enum import Enum
+from flask_cors import CORS, cross_origin
 
-    x_val, y_val = x_train[0:500], y_train[0:500]
-    initiator()
-elif sys.argv[1] == "client":
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=config_client['client_test_size'], random_state=0
-    )
-    print(x_train.shape[1])
-    scaler = MinMaxScaler()
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
-    client()
+class JOB_STATUS(Enum):
+    IDLE = 0
+    RUNNING = 1
+
+app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
+api = Api(app, version='1.0', title='Federated Learning API',
+    description='Flower based job runner',
+)
+
+ns = api.namespace('jobs', description='Jobs and their status')
+
+job = api.model('Job', {
+    'name': fields.String(required=True, description='The job identifier'),
+    'status': fields.String(required=True, description='The job status'),
+})
+
+local_address = api.model('Local Address', {
+    'address': fields.String(required=True, description='The address of the system'),
+})
+
+round_info = api.model('Round Info', {
+    'round': fields.Integer(required=True, description='The round number'),
+    'total_rounds': fields.Integer(required=True, description='The total number of rounds'),
+})
+
+job_status_tracker = {
+    'client': JOB_STATUS.IDLE,
+    'initiator':JOB_STATUS.IDLE,
+}
+
+round_number = 0
+
+# class syntax
+@ns.route('/initiator')
+class InitiatorJob(Resource):
+    @api.marshal_with(job)
+    def get(self):
+        return {
+            'name': 'initiator',
+            'status': job_status_tracker['initiator'].name
+        }
+    
+    def post(self):
+        global x_train, x_test, y_train, y_test, x_val, y_val, round_number
+
+        round_number = 0
+
+        # Load data and model here to avoid the overhead of doing it in `evaluate` itself
+        x_train, x_test, y_train, y_test = train_test_split(
+            x, y, test_size=config_client['initiator_test_size'], random_state=0
+        )
+        scaler = MinMaxScaler()
+        x_train = scaler.fit_transform(x_train)
+        x_test = scaler.transform(x_test)
+        # Use the last 5k training examples as a validation set
+
+        x_val, y_val = x_train[0:500], y_train[0:500]
+
+        def initiator_handler():
+            global job_status_tracker, round_number
+            initiator()
+            job_status_tracker['initiator'] = JOB_STATUS.IDLE
+
+        if job_status_tracker['initiator'] == JOB_STATUS.IDLE and job_status_tracker['client'] == JOB_STATUS.IDLE:
+            thread = threading.Thread(target=initiator_handler)
+            thread.start()
+            job_status_tracker['initiator'] = JOB_STATUS.RUNNING
+            return {
+                'name': 'initiator',
+                'status': job_status_tracker['initiator'].name
+            }
+        else:
+            return Response("Job already running", status=400)
+
+@ns.route('/client')
+class ClientJob(Resource):
+    @api.marshal_with(job)
+    def get(self):
+        return {
+            'name': 'client',
+            'status': job_status_tracker['client'].name
+        }
+
+    @api.expect(local_address)
+    def post(self):    
+        global x_train, x_test, y_train, y_test, round_number
+
+        round_number = 0
+
+        x_train, x_test, y_train, y_test = train_test_split(
+            x, y, test_size=config_client['client_test_size'], random_state=0
+        )
+        print(x_train.shape[1])
+        scaler = MinMaxScaler()
+        x_train = scaler.fit_transform(x_train)
+        x_test = scaler.transform(x_test)
+
+        def client_handler(address):
+            global job_status_tracker
+            client(address)
+            job_status_tracker['client'] = JOB_STATUS.IDLE
+
+        if job_status_tracker['initiator'] == JOB_STATUS.IDLE and job_status_tracker['client'] == JOB_STATUS.IDLE:
+            thread = threading.Thread(target=client_handler, args=(api.payload['address'],))
+            thread.start()
+            job_status_tracker['client'] = JOB_STATUS.RUNNING
+            return {
+                'name': 'client',
+                'status': job_status_tracker['client'].name
+            }
+        else:
+            return Response("Job already running", status=400)
+    
+@ns.route('/initiator/address')
+class InitiatorAddress(Resource):
+    @api.marshal_with(local_address)
+    def get(self):
+        return {
+            'address': config_client['ip_address']
+        }
+    
+
+@ns.route('/initiator/rounds')
+class IntiatorRounds(Resource):
+    @api.marshal_with(round_info)
+    def get(self):
+            return {
+                'round': round_number,
+                'total_rounds': config_client['rounds'] + 1
+            }
+
+@ns.route('/client/rounds')
+class ClientRounds(Resource):        
+    @api.marshal_with(round_info)
+    def get(self):
+        return {
+            'round': round_number,
+            'total_rounds': config_client['rounds']
+        }
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
